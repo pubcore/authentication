@@ -21,7 +21,7 @@ Scenarios leverage HTTP Basic Auth via SSL/TLS (https) are a usecase for this pa
 #### Arguments
 	The argument object consists of following artifacts:
 	Gofers are callback functions which will be invoked with "user" argument.  
-	Carriers are Promises to load/send data. They are not implemented here.
+	Carriers are Promises to load/send data.
 	Libs are functions or promises to map data.
 	Options are plain objects for configuration purpose.
 
