@@ -1,0 +1,50 @@
+{
+  "scripts": {
+    "test": "nyc --reporter=html --reporter=text mocha --inspect --require babel-register --require source-map-support --recursive",
+    "build": "babel src --out-dir js",
+    "prepare": "npm run build && webpack --optimize-minimize",
+    "watch": "babel --watch src --out-dir js",
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
+  },
+  "main": "js/index.js",
+  "license": "MIT",
+  "babel": {
+    "presets": [
+      "env"
+    ],
+    "plugins": [
+      "transform-object-rest-spread"
+    ]
+  },
+  "name": "@pubcore/authentication",
+  "version": "1.0.0",
+  "description": "user authentication logic",
+  "repository": {
+      "type": "git",
+      "url": "git+ssh://git@github.com:pubcore/authentication.git"
+  },
+  "keywords": [
+    "authentication",
+    "login",
+    "username password based"
+  ],
+  "author": "",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "chai": "^4.1.2",
+    "chai-spies": "^1.0.0",
+    "coveralls": "^3.0.1",
+    "eslint": "^4.19.1",
+    "eslint-plugin-mocha": "^5.0.0",
+    "mocha": "^5.2.0",
+    "nyc": "^12.0.2",
+    "webpack": "^4.10.2",
+    "webpack-cli": "^3.0.1"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jshashes": "^1.0.7"
+  }
+}
