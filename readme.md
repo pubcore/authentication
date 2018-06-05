@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/pubcore/authentication.svg?branch=master)](https://travis-ci.com/pubcore/authentication)
+
 ### Username/password based authentication process
 Authentication with trusted pears can be done username/password based.
 Scenarios leverage HTTP Basic Auth via SSL/TLS (https) are a usecase for this package.
