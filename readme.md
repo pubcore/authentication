@@ -41,10 +41,10 @@ Scenarios leverage HTTP Basic Auth via SSL/TLS (https) are a usecase for this pa
 		passwordExpired(){}
 	},
 	options = {
-		maxTimeWithoutActivity: (integer)[micro seconds],
-		maxTimeWithout401: (integer)[micro seconds],
+		maxTimeWithoutActivity: (integer)[milli seconds],
+		maxTimeWithout401: (integer)[milli seconds],
 		maxLoginAttempts: (integer),
-		maxLoginAttemptsTimeWindow: (integer)[micro seconds]
+		maxLoginAttemptsTimeWindow: (integer)[milli seconds]
 	},
 	carrier = { getUser: ({username}) => <Promise resolve to user or null> },
 	lib = { comparePassword: (x, y) => <Promise resolve to boolean> }

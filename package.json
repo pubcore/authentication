@@ -20,8 +20,8 @@
   "version": "1.0.0",
   "description": "user authentication logic",
   "repository": {
-      "type": "git",
-      "url": "git+ssh://git@github.com:pubcore/authentication.git"
+    "type": "git",
+    "url": "git+ssh://git@github.com:pubcore/authentication.git"
   },
   "keywords": [
     "authentication",
