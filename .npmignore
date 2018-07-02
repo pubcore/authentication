@@ -1,4 +1,4 @@
 src
-dist
 test
 .nyc_output
+!dist/
