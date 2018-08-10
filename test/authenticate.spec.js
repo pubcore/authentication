@@ -6,6 +6,52 @@ chai.use(spies)
 afterEach( () => { chai.spy.restore() })
 
 const typeByName = (name) => name[2]==='S' ? 'SYSTEM' : 'HUMAN'
+const options = {
+	maxTimeWithoutActivity: 1000 * 60 * 60 * 24 * 180,
+	maxTimeWithout401: 1000 * 60 * 60 * 6,
+	maxLoginAttempts:1,
+	maxLoginAttemptsTimeWindow:0,
+	minTimeBetweenUpdates:0
+}
+const getUser = username => { return ({
+	//if username ends with S, type will be set to "SYSTEM"
+	uA:{deactivate:'yes'},
+	uB:{
+		created_time:new Date('01.01.1990'),
+		last_login:null,
+		type:typeByName(username)
+	},
+	uC:{
+		last_login:new Date(new Date().getTime() - options.maxTimeWithout401 - 1000),
+		type:typeByName(username)
+	},
+	uD:{
+		last_login:new Date(new Date().getTime() - 1000),
+		password:'z'
+	},
+	uE:{
+		last_login:new Date(new Date().getTime() - 1000),
+		password:'z',
+		password_secondary:'ps'
+	},
+	uF:{
+		last_login:new Date(new Date().getTime() - 1000),
+		password:'z',
+		last_login_failed:new Date(new Date().getTime() + 1000),
+		login_failed_count:1,
+		type:typeByName(username)
+	},
+	uG:{
+		last_login:new Date(new Date().getTime() - 1000),
+		password:'z',
+		password_expiry_date:new Date(new Date().getTime() - 1000),
+		type:typeByName(username)
+	},
+	uH:{
+		last_login:new Date(new Date().getTime() - 1000),
+		password_new:'z',
+	},
+})[username.substring(0, 2)] }
 
 var gofer = {
 		noCredentials(){},
@@ -18,53 +64,11 @@ var gofer = {
 		oldPwUsed(){},
 		passwordExpired(){}
 	},
-	options = {
-		maxTimeWithoutActivity: 1000 * 60 * 60 * 24 * 180,
-		maxTimeWithout401: 1000 * 60 * 60 * 6,
-		maxLoginAttempts:1,
-		maxLoginAttemptsTimeWindow:0
-	},
-	carrier = { getUser: ({username}) => Promise.resolve(({
-		//if username ends with S, type will be set to "SYSTEM"
-		uA:{deactivate:'yes'},
-		uB:{
-			created_time:new Date('01.01.1990'),
-			last_login:null,
-			type:typeByName(username)
-		},
-		uC:{
-			last_login:new Date(new Date().getTime() - options.maxTimeWithout401 - 1000),
-			type:typeByName(username)
-		},
-		uD:{
-			last_login:new Date(new Date().getTime() - 1000),
-			password:'z'
-		},
-		uE:{
-			last_login:new Date(new Date().getTime() - 1000),
-			password:'z',
-			password_secondary:'ps'
-		},
-		uF:{
-			last_login:new Date(new Date().getTime() - 1000),
-			password:'z',
-			last_login_failed:new Date(new Date().getTime() + 1000),
-			login_failed_count:1,
-			type:typeByName(username)
-		},
-		uG:{
-			last_login:new Date(new Date().getTime() - 1000),
-			password:'z',
-			password_expiry_date:new Date(new Date().getTime() - 1000),
-			type:typeByName(username)
-		},
-		uH:{
-			last_login:new Date(new Date().getTime() - 1000),
-			password_new:'z',
-		},
-	})[username.substring(0, 2)]) },
-	lib = { comparePassword: (x, y) => Promise.resolve(x==y) },
-	arg = { gofer, carrier, lib, options}
+	carrier = {
+		getOptions: () => Promise.resolve(options),
+		getUser: ({username}) => Promise.resolve(getUser(username)) },
+	lib = {comparePassword: (x, y) => Promise.resolve(x==y) },
+	arg = {gofer, carrier, lib}
 
 function expectOnlyOneHasBeenCalled(only){
 	Object.keys(gofer).forEach(n => {
