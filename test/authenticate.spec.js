@@ -1,6 +1,7 @@
 import authenticate from '../src/index'
 import chai, {expect} from 'chai'
 import spies from 'chai-spies'
+import {sign} from 'jsonwebtoken'
 chai.use(spies)
 
 afterEach( () => { chai.spy.restore() })
@@ -11,7 +12,8 @@ const options = {
 	maxTimeWithout401: 1000 * 60 * 60 * 6,
 	maxLoginAttempts:1,
 	maxLoginAttemptsTimeWindow:0,
-	minTimeBetweenUpdates:0
+	minTimeBetweenUpdates:0,
+	jwtKey:'shhhhh'
 }
 const getUser = username => { return ({
 	//if username ends with S, type will be set to "SYSTEM"
@@ -62,7 +64,8 @@ var gofer = {
 		invalidPassword(){},
 		authenticated(){},
 		oldPwUsed(){},
-		passwordExpired(){}
+		passwordExpired(){},
+		invalidWebToken(){}
 	},
 	carrier = {
 		getOptions: () => Promise.resolve(options),
@@ -70,94 +73,98 @@ var gofer = {
 	lib = {comparePassword: (x, y) => Promise.resolve(x==y) },
 	arg = {gofer, carrier, lib}
 
+var jwt = sign({username:'uD'}, options.jwtKey, { algorithm: 'HS256'}),
+	jwt2 = sign({username:'doesNotExist'}, options.jwtKey, { algorithm: 'HS256'})
+
 function expectOnlyOneHasBeenCalled(only){
 	Object.keys(gofer).forEach(n => {
 		expect(gofer[n]).to.have.been.called.exactly(n==only ? 1 : 0)
 	})
 }
-function spyGofer(){
-	chai.spy.on(gofer, Object.keys(gofer))
-}
+
+beforeEach(() => chai.spy.on(gofer, Object.keys(gofer)))
 
 describe('user authentication by username and password', () => {
 	it('returns a promise', () => {
 		expect(authenticate(arg)).to.be.a('promise')
 	})
 	it('invokes "noCredentials", if username or password is empty', () => {
-		spyGofer()
 		return authenticate(arg).then(() => {
 			expectOnlyOneHasBeenCalled('noCredentials')
 		})
 	})
 	it('invokes "notFound", if user not found by usesername', () => {
-		spyGofer()
 		return authenticate({...arg, username:'xy', password:'xy'}).then(() => {
 			expectOnlyOneHasBeenCalled('notFound')
 		})
 	})
 	it('invokes "isDeactivated", if user is deactivated', () => {
-		spyGofer()
 		return authenticate({...arg, username:'uA', password:'xy'}).then(() => {
 			expectOnlyOneHasBeenCalled('isDeactivated')
 		})
 	})
 	it('invokes "toDeactivate" for HUMAN users, if last login and user\'s creation long time ago', () => {
-		spyGofer()
 		return authenticate({...arg, username:'uB', password:'xy'}).then(() => {
 			expectOnlyOneHasBeenCalled('toDeactivate')
 		})
 	})
 	it('invokes "loginExpired" for HUMAN users, if last login is some hours ago', () => {
-		spyGofer()
 		return authenticate({...arg, username:'uC', password:'xy'}).then(() => {
 			expectOnlyOneHasBeenCalled('loginExpired')
 		})
 	})
 	it('invokes "invalidPassword" if active user exists, but passwort is wrong', () => {
-		spyGofer()
 		return authenticate({...arg, username:'uD', password:'xy'}).then(() => {
 			expectOnlyOneHasBeenCalled('invalidPassword')
 		})
 	})
+	it('invokes "invalidWebToken", if JsonWebToken is there (not falsy) and invalid', () => {
+		return authenticate({...arg, jwt:'xyz'}).then(() => {
+			expectOnlyOneHasBeenCalled('invalidWebToken')
+		})
+	})
 	it('invokes "authenticated", if active user found and passwort is ok', () => {
-		spyGofer()
 		return authenticate({...arg, username:'uD', password:'z'}).then(() => {
 			expectOnlyOneHasBeenCalled('authenticated')
 		})
 	})
+	it('invokes "authenticated", if valid JsonWebToken is there', () => {
+		return authenticate({...arg, jwt}).then(() => {
+			expectOnlyOneHasBeenCalled('authenticated')
+		})
+	})
+	it('invokes "notFound", if user not found by JsonWebToken', () =>
+		authenticate({...arg, jwt:jwt2}).then(() => {
+			expectOnlyOneHasBeenCalled('notFound')
+		})
+	)
 	it('invokes "oldPwUsed" (oldPasswordUsed), if secondary password is given, but old password is used (and does match) to authenticate', () => {
-		spyGofer()
 		return authenticate({...arg, username:'uE', password:'z'}).then(() => {
 			expect(gofer.oldPwUsed).to.have.been.called.exactly(1)
 			expect(gofer.authenticated).to.have.been.called.exactly(1)
 		})
 	})
 	it('supports login with secondary password, if configured', () => {
-		spyGofer()
 		return authenticate({...arg, username:'uE', password:'ps'}).then(() => {
 			expectOnlyOneHasBeenCalled('authenticated')
 		})
 	})
 	it('invokes "toDeactivate", if active, non system user reach max attempts with wrong password, within some time-frame', () => {
-		spyGofer()
 		return authenticate({...arg, username:'uF', password:'xy'}).then(() => {
 			expectOnlyOneHasBeenCalled('toDeactivate')
 		})
 	})
 	it('invokes "passwordExpired", if active, non system user login with old password', () => {
-		spyGofer()
 		return authenticate({...arg, username:'uG', password:'z'}).then(() => {
 			expectOnlyOneHasBeenCalled('passwordExpired')
 		})
 	})
 	it('supports login with temporary password', () => {
-		spyGofer()
 		return authenticate({...arg, username:'uH', password:'z'}).then(() => {
 			expectOnlyOneHasBeenCalled('authenticated')
 		})
 	})
 	it('must not invoke "toDeactivate", "loginExpired" and "passwordExpired" for SYSTEM user', () => {
-		spyGofer()
 		Promise.all([
 			authenticate({...arg, username:'uBS', password:'xy'}),
 			authenticate({...arg, username:'uCS', password:'xy'}),
