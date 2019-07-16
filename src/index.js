@@ -4,17 +4,32 @@ import {verify} from 'jsonwebtoken'
 
 //brute force protection => see express-rate-limit
 export default arg => {
-	var {username, password, gofer, carrier, jwt} = arg,
+	var {username, password, gofer, carrier, jwt, jwtList} = arg,
 		{noCredentials, notFound, isDeactivated, toDeactivate, loginExpired,
 			invalidPassword, authenticated, passwordExpired, invalidWebToken} = gofer,
 		{getUser, getOptions} = carrier,
-		isDeactivatedCallback = isDeactivated
+		isDeactivatedCallback = isDeactivated,
+		jwtExists = Array.isArray(jwtList) && jwtList.length || jwt,
+		jwts = jwtList || [jwt],
+		chain = (tokens, options, resolve) => {
+			//use pop because sequence matters, last item has highest priority
+			var token = tokens.pop()
+			verify(token, options.jwtKey, {algorithms: ['HS256']}, (err, decoded) => {
+				if(err && tokens.length){
+					chain(tokens, options, resolve)
+				}else if(err){
+					invalidWebToken(err)
+					resolve()
+				}else{
+					resolve(decoded)
+				}
+			})
+		}
+
 	return getOptions().then(options => new Promise(resolve =>
-		jwt && verify(jwt, options.jwtKey, {algorithms: ['HS256']}, (err, decoded) => {
-			resolve(err ? invalidWebToken(err)&&null : decoded )
-		}) || resolve()
+		jwtExists && chain(jwts, options, resolve) || resolve()
 	).then( jwtDecoded =>
-		jwt ? jwtDecoded && getUser(jwtDecoded).then( usr => usr || null)
+		jwtExists ? jwtDecoded && getUser(jwtDecoded).then( usr => usr || null)
 			: (
 				(!username || !password) ?
 					noCredentials()
@@ -36,7 +51,7 @@ export default arg => {
 		}else if(loginExpired && isLoginExpired){
 			return loginExpired(user)
 		}else {
-			return (jwt ? Promise.resolve(true) : checkPw({user, ...arg})).then(
+			return (jwtExists ? Promise.resolve(true) : checkPw({user, ...arg})).then(
 				checkOk => checkOk ?
 					isPasswordExpired ?
 						passwordExpired(user) : authenticated(user, isTimeToUpdate)

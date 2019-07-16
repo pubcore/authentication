@@ -138,6 +138,26 @@ describe('user authentication by username and password', () => {
 			expectOnlyOneHasBeenCalled('notFound')
 		})
 	)
+	it('invokes "invalidWebToken" by list of JsonWebTokens (jwtList)', () =>
+		authenticate({...arg, jwt, jwtList:['abc', 'xyz']}).then(() => {
+			expectOnlyOneHasBeenCalled('invalidWebToken')
+		})
+	)
+	it('invokes "notFound", if last token is valid, but user not found (jwtList)', () =>
+		authenticate({...arg, jwt, jwtList:[jwt, jwt2]}).then(() => {
+			expectOnlyOneHasBeenCalled('notFound')
+		})
+	)
+	it('invokes "authenticated" by jwtList (last entry will be checked first)', () =>
+		authenticate({...arg, jwt:jwt2, jwtList:['xyz', jwt]}).then(() => {
+			expectOnlyOneHasBeenCalled('authenticated')
+		})
+	)
+	it('invokes "authenticated" by jwtList (both entries will be checked if last one is invalid)', () =>
+		authenticate({...arg, jwt:jwt2, jwtList:[jwt, 'xyz']}).then(() => {
+			expectOnlyOneHasBeenCalled('authenticated')
+		})
+	)
 	it('invokes "oldPwUsed" (oldPasswordUsed), if secondary password is given, but old password is used (and does match) to authenticate', () => {
 		return authenticate({...arg, username:'uE', password:'z'}).then(() => {
 			expect(gofer.oldPwUsed).to.have.been.called.exactly(1)

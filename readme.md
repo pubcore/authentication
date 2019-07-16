@@ -15,6 +15,10 @@
 ✓ invokes "authenticated", if active user found and passwort is ok
 ✓ invokes "authenticated", if valid JsonWebToken is there
 ✓ invokes "notFound", if user not found by JsonWebToken
+✓ invokes "invalidWebToken" by list of JsonWebTokens (jwtList)
+✓ invokes "notFound", if last token is valid, but user not found (jwtList)
+✓ invokes "authenticated" by jwtList (last entry will be checked first)
+✓ invokes "authenticated" by jwtList (both entries will be checked if last one is invalid)
 ✓ invokes "oldPwUsed" (oldPasswordUsed), if secondary password is given, but old password is used (and does match) to authenticate
 ✓ supports login with secondary password, if configured
 ✓ invokes "toDeactivate", if active, non system user reach max attempts with wrong password, within some time-frame
@@ -28,9 +32,10 @@
 	Carriers are Promises to load/send data.
 	Libs are functions or promises to map data.
 	jwt is optional JsonWebToken string, encoded as it comes from request data.
-	username/password is required, if jwt is falsy or invalid
+	username/password is required, if jwt is falsy or invalid.
+	jwtList (array of string): with this argument, potential existence of more than one token (due to usage of cross-domain cookies) is supported. According to standard's recommendations how browsers send duplicate cookies, last item will be checked first. If jwtList is given, jwt is ignored.
 
-	arg = {gofer, carrier, lib, jwt, username, password}
+	arg = {gofer, carrier, lib, jwt, jwtList, username, password}
 
 	gofer = {
 		noCredentials(){},
