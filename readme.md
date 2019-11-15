@@ -1,6 +1,8 @@
 [![Build Status](https://travis-ci.com/pubcore/authentication.svg?branch=master)](https://travis-ci.com/pubcore/authentication)
 
-### Username/password or JsonWebTOken based authentication process
+### Username/password or JsonWebToken based authentication process
+
+[activity diagram](doc/authentication-flow.png)
 
 #### Features
 ```
@@ -27,15 +29,16 @@
 ✓ must not invoke "toDeactivate", "loginExpired" and "passwordExpired" for SYSTEM user
 ```
 #### Arguments
-	The argument object consists of following artifacts:
-	Gofers are callback functions which will be invoked with "user" argument.  
-	Carriers are Promises to load/send data.
-	Libs are functions or promises to map data.
-	jwt is optional JsonWebToken string, encoded as it comes from request data.
-	username/password is required, if jwt is falsy or invalid.
-	jwtList (array of string): with this argument, potential existence of more than one token (due to usage of cross-domain cookies) is supported. According to standard's recommendations how browsers send duplicate cookies, last item will be checked first. If jwtList is given, jwt is ignored.
+The argument object consists of
 
-	arg = {gofer, carrier, lib, jwt, jwtList, username, password}
+arg = {gofer, carrier, lib, jwt, jwtList, username, password}
+
+**Gofers** are callback functions which will be invoked with "user" argument.  
+**Carriers** are Promises to load/send data.  
+**Libs** are functions or promises to map data.  
+**jwt** is optional JsonWebToken string, encoded as it comes from request data.  
+**username/password** is required, if jwt is falsy or invalid.  
+**jwtList** (array of string): with this argument, potential existence of more than one token (e.g. due to usage of cross-domain cookies) is supported. According to standard's recommendations how browsers send duplicate cookies, last item will be checked first. If jwtList is given, jwt is ignored.
 
 	gofer = {
 		noCredentials(){},
@@ -50,8 +53,9 @@
 	},
 	carrier = {
 		getUser: ({username}) => <Promise resolve to user or null>
-		getOptions: () => Promise resolve to an options object>
+		getOptions: () => <Promise resolve to an options object>
 	lib = { comparePassword: (x, y) => <Promise resolve to boolean> }
+
 
 #### Options
 ```
@@ -77,5 +81,5 @@
 		last_login_failed: <Date>,
 		login_failed_count: <Integer>,
 		password_expiry_date: <Date>
-		deactivate:<string>
+		deactivate: <String>
 	}
